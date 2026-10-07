@@ -9,4 +9,6 @@ Latest file will be in this repository, simply download and double click and it 
 
 Right click the icon in system tray and get a list of options. Have any bugs? Report them through the form in UGA.
 
+Note: on most school WIFIs, i###s is built in. To combat this, simply go into settings, network and internet, WIFI, and find your school WIFI. Then, under DNS server assignment, change it to manual, turn on IPV4, and set preferred to 1.1.1.1, and alternate to 1.0.0.1, and press save. this network should no longer have i###s in it for you.
+
 thanks to https://github.com/johnfkennedyactualrealofficial for sillyduo, which this was built off of.
