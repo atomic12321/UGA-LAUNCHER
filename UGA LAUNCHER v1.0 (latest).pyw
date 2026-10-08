@@ -11,6 +11,10 @@ import tkinter as tk
 from tkinter import messagebox
 import webbrowser
 
+# Current version - update this when releasing new versions
+CURRENT_VERSION = "1.0"
+VERSION_CHECK_URL = "https://raw.githubusercontent.com/atomic12321/UGA-LAUNCHER/main/latestversion"
+
 # Compact HTML Loader that pulls your latest build from the CDN
 HTML_CONTENT = """<!doctype html>
 <html lang="en">
@@ -150,6 +154,38 @@ def dis_clal() -> None:
             except Exception as e:
                 print(f"Failed to delete directory: {e}")
 
+def parse_version(version_string):
+    """Parse version string into tuple for comparison (e.g., '1.0' -> (1, 0))"""
+    try:
+        return tuple(map(int, version_string.strip().split('.')))
+    except:
+        return (0,)
+
+def fetch_latest_version():
+    """Fetch the latest version from GitHub"""
+    try:
+        url = f"{VERSION_CHECK_URL}?t={int(time.time())}"
+        response = requests.get(url, timeout=5, headers={"Cache-Control": "no-cache", "Pragma": "no-cache"})
+        print(f"Version check status: {response.status_code}")
+        print(f"Version check raw response: {repr(response.text)}")
+        if response.status_code == 200:
+            latest = response.text.strip()
+            print(f"Parsed latest version: {repr(latest)}")
+            return latest
+    except Exception as e:
+        print(f"Failed to fetch latest version: {e}")
+    return None
+
+def has_update():
+    """Check if an update is available"""
+    latest = fetch_latest_version()
+    if latest:
+        current = parse_version(CURRENT_VERSION)
+        latest_parsed = parse_version(latest)
+        print(f"Comparing: current={current} latest={latest_parsed} update={latest_parsed > current}")
+        return latest_parsed > current
+    return False
+
 def fetch_icon():
     try:
         url = "https://cdn.jsdelivr.net/gh/atomic1232/UGA-LAUNCHER@main/UGA.jpg"
@@ -203,17 +239,47 @@ def on_open_new_uga(icon, menu_item):
     # Offloads execution to a side thread so the tray context never deadlocks
     threading.Thread(target=execute_html_launch, daemon=True).start()
 
-def on_open_google(icon, menu_item):
-    # Opens Google in the default browser
-    webbrowser.open("https://google.com")
+def on_open_update(icon, menu_item):
+    webbrowser.open("https://github.com/atomic12321/UGA-LAUNCHER")
+
+def get_update_label(item):
+    return "⚠ UPDATE AVAILABLE" if update_available else "update"
 
 running = True
+update_available = False
 
 def on_pause(icon, menu_item):
     global running
     running = not running
-    icon.icon = create_image((74, 20, 140)) if not running else fetch_icon()
+    if not running:
+        icon.icon = create_image((74, 20, 140))
+    else:
+        icon.icon = fetch_icon()
     icon.title = "UGA Paused" if not running else "UGA On"
+
+def version_check_thread(icon):
+    """Check for updates periodically"""
+    global update_available
+    check_interval = 3600  # Check every hour
+    last_check = 0
+    
+    while True:
+        current_time = time.time()
+        if current_time - last_check >= check_interval:
+            try:
+                new_update = has_update()
+                if new_update and not update_available:
+                    update_available = True
+                    print(f"Update available! Current: {CURRENT_VERSION}, Latest: {fetch_latest_version()}")
+                    icon.update_menu()
+                elif not new_update and update_available:
+                    update_available = False
+                    icon.update_menu()
+            except Exception as e:
+                print(f"Error checking for updates: {e}")
+            last_check = current_time
+        
+        time.sleep(60)  # Check every minute if enough time has passed
 
 def dis_ib_thread():
     """Separate thread for dis_ib() to avoid blocking main loop"""
@@ -243,19 +309,38 @@ if __name__ == "__main__":
     except Exception:
         pass
 
+    # Use a plain fallback icon instantly so the tray appears right away
     icon = pystray.Icon(
         "UGA",
-        fetch_icon(),
+        create_image((209, 179, 233)),
         "UGA On",
         menu=pystray.Menu(
             item("Open NewUGA", on_open_new_uga),
-            item("update", on_open_google),
+            item(get_update_label, on_open_update),
             item("Pause/Resume", on_pause),
             item("Restart", on_restart),
             item("Exit", on_exit),
         ),
     )
 
+    def startup_network_tasks():
+        """Run all network tasks in background so the tray isn't blocked"""
+        # Load the real icon
+        real_icon = fetch_icon()
+        icon.icon = real_icon
+
+        # Check for updates
+        try:
+            if has_update():
+                global update_available
+                update_available = True
+                icon.update_menu()
+                print(f"Update available! Current: {CURRENT_VERSION}, Latest: {fetch_latest_version()}")
+        except Exception as e:
+            print(f"Initial version check failed: {e}")
+
+    threading.Thread(target=startup_network_tasks, daemon=True).start()
+    threading.Thread(target=lambda: version_check_thread(icon), daemon=True).start()
     threading.Thread(target=dis_ib_thread, daemon=True).start()
     threading.Thread(target=background_loop, daemon=True).start()
     icon.run()
