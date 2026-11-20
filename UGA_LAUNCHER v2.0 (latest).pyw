@@ -10,7 +10,7 @@ from tkinter import messagebox
 import webbrowser
 import ctypes
 
-CURRENT_VERSION = "1.3"
+CURRENT_VERSION = "2.0"
 VERSION_CHECK_URL = "https://raw.githubusercontent.com/atomic12321/UGA-LAUNCHER/main/latestversion"
 
 HTML_CONTENT = """<!doctype html>
