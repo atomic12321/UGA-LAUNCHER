@@ -1,7 +1,7 @@
 LATEST VERSION: 1.2
 
 
-LAUNCHER FOR UGA THAT KILLS I###S AND S#####Y
+LAUNCHER FOR UGA THAT KILLS I###S
 
 Latest file will be in this repository, simply download and double click and it will open in the system tray!
 
