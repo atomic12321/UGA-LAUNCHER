@@ -1,4 +1,3 @@
-import io
 import importlib
 import os
 import subprocess
@@ -107,7 +106,6 @@ GREEN   = "#15FF00"
 running          = True
 update_available = False
 ib_enabled       = True
-fake_sec_mode    = 0
 settings_open    = False
 
 # ── Core ───────────────────────────────────────────────────────────────────────
@@ -147,46 +145,11 @@ def has_update():
         return parse_version(latest) > parse_version(CURRENT_VERSION)
     return False
 
-# ── Icons ──────────────────────────────────────────────────────────────────────
-def _fetch_image(url):
-    try:
-        r = requests.get(url, timeout=5)
-        if r.status_code == 200:
-            return Image.open(io.BytesIO(r.content)).convert("RGBA")
-    except Exception as e:
-        print(f"Image fetch error: {e}")
-    return None
-
-def fetch_icon():
-    img = _fetch_image("https://cdn.jsdelivr.net/gh/atomic1232/UGA-LAUNCHER@main/UGA.jpg")
-    if img:
-        return img
-    w = h = 64
-    image = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    ImageDraw.Draw(image).ellipse((8, 8, w-8, h-8), fill=(21, 255, 0))
-    return image
-
-def fetch_fake_sec_icon():
-    return _fetch_image("https://cdn.jsdelivr.net/gh/atomic12321/UGA-LAUNCHER@main/fake%20sec%20logo.png")
-
-def fetch_fake_sec_icon_dark():
-    return _fetch_image("https://cdn.jsdelivr.net/gh/atomic12321/UGA-LAUNCHER@main/fake%20sec%20logo%20dark.png")
-
 def create_image(color):
     w = h = 64
     image = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     ImageDraw.Draw(image).ellipse((8, 8, w-8, h-8), fill=color)
     return image
-
-def apply_icon_for_mode(tray_icon):
-    if fake_sec_mode == 1:
-        img = fetch_fake_sec_icon()
-    elif fake_sec_mode == 2:
-        img = fetch_fake_sec_icon_dark()
-    else:
-        img = fetch_icon()
-    if img:
-        tray_icon.icon = img
 
 # ── HTML launcher ──────────────────────────────────────────────────────────────
 def execute_html_launch():
@@ -208,7 +171,7 @@ def open_settings(tray_icon):
         return
 
     def _build():
-        global settings_open, ib_enabled, fake_sec_mode, running
+        global settings_open, ib_enabled, running
         settings_open = True
 
         win = tk.Tk()
@@ -323,26 +286,6 @@ def open_settings(tray_icon):
         make_toggle(mod, "IB Bypass", "Disables iBoss proxy via registry",
                     lambda: ib_enabled, do_ib)
 
-        # ── Tray Icon ──
-        label(body, "TRAY ICON", 8, bold=True, color=FG_DIM).pack(anchor="w", pady=(0,4))
-        c3 = card(body)
-        c3.pack(fill="x", pady=(0,10))
-        icon_inner = tk.Frame(c3, bg=CARD, padx=12, pady=10)
-        icon_inner.pack(fill="x")
-        icon_var = tk.IntVar(value=fake_sec_mode)
-        for text, val in [("Normal (UGA)", 0), ("Fake SEC – Light", 1), ("Fake SEC – Dark", 2)]:
-            tk.Radiobutton(icon_inner, text=text, variable=icon_var, value=val,
-                           bg=CARD, fg=FG, selectcolor=BG,
-                           activebackground=CARD, activeforeground=ACCENT,
-                           font=("Segoe UI", 9), cursor="hand2").pack(anchor="w")
-
-        def apply_icon():
-            global fake_sec_mode
-            fake_sec_mode = icon_var.get()
-            threading.Thread(target=lambda: apply_icon_for_mode(tray_icon), daemon=True).start()
-
-        btn(icon_inner, "Apply", apply_icon, width=8).pack(anchor="w", pady=(8,0))
-
         # ── System ──
         label(body, "SYSTEM", 8, bold=True, color=FG_DIM).pack(anchor="w", pady=(0,4))
         c4 = card(body)
@@ -357,7 +300,7 @@ def open_settings(tray_icon):
                 tray_icon.icon = create_image((74, 20, 140))
                 tray_icon.title = "UGA Paused"
             else:
-                threading.Thread(target=lambda: apply_icon_for_mode(tray_icon), daemon=True).start()
+                tray_icon.icon = create_image((21, 255, 0))
                 tray_icon.title = "UGA On"
             pause_btn.config(text="Resume" if not running else "Pause")
 
@@ -432,7 +375,6 @@ if __name__ == "__main__":
 
     def startup_tasks():
         global update_available
-        tray_icon.icon = fetch_icon()
         try:
             if has_update():
                 update_available = True
