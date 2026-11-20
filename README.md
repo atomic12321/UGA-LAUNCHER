@@ -1,5 +1,6 @@
-LATEST VERSION: 1.2
+LATEST VERSION: 2.0
 
+ONLY USE FOR EDUCATIONAL PURPOSES, FOR EXAMPLE, VISITING WEBSITES FOR CLUBS THAT ARE BLOCKED FOR NOT BEING BIG WEBSITES. WE DO NOT CONDONE USE FOR ANY NON EDUCATIONAL USE AND WILL NOT TAKE ANY BLAME. THIS IS PURELY TO SHOW WHAT IS POSSIBLE
 
 LAUNCHER FOR UGA THAT KILLS I###S
 
@@ -14,3 +15,4 @@ Note: on most school WIFIs, i###s is built in. To combat this, simply disconnect
 thanks to https://github.com/johnfkennedyactualrealofficial for sillyduo, which this was built off of. 
 
 Have an issue? Bring it up using the form on the UGA page
+ 
